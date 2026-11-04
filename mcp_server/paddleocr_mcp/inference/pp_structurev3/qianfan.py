@@ -23,10 +23,13 @@ from .params import PP_STRUCTUREV3_DEFAULT_PARAMS, PP_STRUCTUREV3_RUNTIME_PARAMS
 
 
 class PPStructureV3QianfanInference(HTTPInferenceBase):
-    def __init__(self, base_url: str, api_key: str, http_timeout: int = 600):
+    def __init__(
+        self, base_url: str, api_key: str, http_timeout: int = 600, model: str = "pp-structurev3"
+    ):
         super().__init__(
             base_url, http_timeout, api_key, provider=InferenceProvider.QIANFAN
         )
+        self._model = model.lower()
 
     @override
     def _get_endpoint(self) -> str:
@@ -38,6 +41,14 @@ class PPStructureV3QianfanInference(HTTPInferenceBase):
             set(PP_STRUCTUREV3_RUNTIME_PARAMS.keys()),
             PP_STRUCTUREV3_DEFAULT_PARAMS.copy(),
         )
+
+    @override
+    def _prepare_payload(
+        self, input_data: str, file_type, **params: Any
+    ) -> dict[str, Any]:
+        payload = super()._prepare_payload(input_data, file_type, **params)
+        payload["model"] = self._model
+        return payload
 
     @override
     def _parse_result(self, response: dict[str, Any]) -> InferenceResult:

@@ -21,12 +21,29 @@ from ..types import InferenceResult
 from ..shared.http_result_parsers import parse_doc_parsing_result
 from .params import PADDLEOCR_VL_DEFAULT_PARAMS, PADDLEOCR_VL_RUNTIME_PARAMS
 
+# Qianfan does not host a bare "paddleocr-vl" slug, only sized variants.
+# Only this mapping is confirmed working against the real API (2026-11-04).
+# "PaddleOCR-VL-1.5"/"-1.6" are passed through unmapped (lowercased) since
+# their Qianfan availability has not been verified — better to fail loudly
+# on an unknown slug than silently guess the wrong model.
+_QIANFAN_MODEL_SLUGS = {
+    "paddleocr-vl": "paddleocr-vl-0.9b",
+}
+
 
 class PaddleOCRVLQianfanInference(HTTPInferenceBase):
-    def __init__(self, base_url: str, api_key: str, http_timeout: int = 600):
+    def __init__(
+        self,
+        base_url: str,
+        api_key: str,
+        http_timeout: int = 600,
+        model: str = "paddleocr-vl-0.9b",
+    ):
         super().__init__(
             base_url, http_timeout, api_key, provider=InferenceProvider.QIANFAN
         )
+        lowered = model.lower()
+        self._model = _QIANFAN_MODEL_SLUGS.get(lowered, lowered)
 
     @override
     def _get_endpoint(self) -> str:
@@ -38,6 +55,14 @@ class PaddleOCRVLQianfanInference(HTTPInferenceBase):
             set(PADDLEOCR_VL_RUNTIME_PARAMS.keys()),
             PADDLEOCR_VL_DEFAULT_PARAMS.copy(),
         )
+
+    @override
+    def _prepare_payload(
+        self, input_data: str, file_type, **params: Any
+    ) -> dict[str, Any]:
+        payload = super()._prepare_payload(input_data, file_type, **params)
+        payload["model"] = self._model
+        return payload
 
     @override
     def _parse_result(self, response: dict[str, Any]) -> InferenceResult:

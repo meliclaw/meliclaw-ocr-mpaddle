@@ -150,6 +150,7 @@ def _create_pp_structurev3_qianfan(model: str, **kwargs: Any) -> Inference:
         base_url=kwargs["base_url"],
         api_key=kwargs["api_key"],
         http_timeout=kwargs.get("http_timeout", 600),
+        model=model,
     )
 
 
@@ -158,6 +159,7 @@ def _create_paddleocr_vl_qianfan(model: str, **kwargs: Any) -> Inference:
         base_url=kwargs["base_url"],
         api_key=kwargs["api_key"],
         http_timeout=kwargs.get("http_timeout", 600),
+        model=model,
     )
 
 
